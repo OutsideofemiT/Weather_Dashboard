@@ -162,13 +162,33 @@ class WeatherService {
 
   // Existing method using the OneCall API for current weather and daily forecast
   async getWeatherForCity(city: string): Promise<{ current: Weather; forecast: Weather[] }> {
-    this.cityName = city;
-    const coordinates = await this.fetchAndDestructureLocationData(city);
-    const weatherData = await this.fetchWeatherData(coordinates);
-    const currentWeather = this.parseCurrentWeather(weatherData);
-    const forecast = weatherData.daily ? this.buildDailyForecastArray(weatherData.daily) : [];
-    return { current: currentWeather, forecast };
+    try {
+      console.log(`✅ Fetching weather for city: ${city}`);
+  
+      // Fetch latitude and longitude
+      const coordinates = await this.fetchAndDestructureLocationData(city);
+      console.log(`📍 Coordinates for ${city}:`, coordinates);
+  
+      // Fetch weather data from OneCall API
+      const weatherData = await this.fetchWeatherData(coordinates);
+      console.log(`🌦️ Weather API Response:`, weatherData);
+  
+      // Ensure weatherData contains expected properties
+      if (!weatherData || !weatherData.current) {
+        throw new Error(`❌ Weather data unavailable for coordinates: ${JSON.stringify(coordinates)}`);
+      }
+  
+      const currentWeather = this.parseCurrentWeather(weatherData);
+      const forecast = weatherData.daily ? this.buildDailyForecastArray(weatherData.daily) : [];
+  
+      console.log(`✅ Successfully fetched weather for ${city}`);
+      return { current: currentWeather, forecast };
+    } catch (error) {
+      console.error("❌ Error in getWeatherForCity:", error);
+      throw error;
+    }
   }
+  
 
   // New method using the forecast endpoint
   async getForecastForCity(city: string): Promise<Weather[]> {

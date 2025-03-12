@@ -6,33 +6,21 @@ import WeatherService from '../../service/weatherService.js';
 
 // POST Request with city name to retrieve weather data
 router.post('/', async (req, res) => {
-  const { cityName, city } = req.body;
-  const requestedCity = cityName || city;
-
-  if (!requestedCity) {
-    console.error("❌ Missing city name in request body:", req.body);
-    return res.status(400).json({ error: 'City name is required' });
-  }
-
   try {
-    console.log(`✅ Fetching weather for: ${requestedCity}`);
-
-    const weather = await WeatherService.getWeatherForCity(requestedCity);
-    if (!weather) {
-      console.error(`❌ WeatherService returned null for city: ${requestedCity}`);
-      return res.status(404).json({ error: "City not found" });
+    const { cityName } = req.body;
+    if (!cityName) {
+      return res.status(400).json({ error: 'City name is required' });
     }
 
-    console.log("✅ Weather Data:", weather);
-    await HistoryService.addCity({ name: requestedCity, id: Math.random().toString() });
-
+    const weather = await WeatherService.getWeatherForCity(cityName);
     return res.status(200).json(weather);
-  } catch (error: unknown) { // ✅ Explicitly type `error`
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error("❌ Error fetching weather data:", errorMessage);
-    return res.status(500).json({ error: 'Failed to fetch weather data', details: errorMessage });
-  }
-});
+  } catch (error) {
+    console.error("❌ Error fetching weather data:", error);
+    return res.status(500).json({ error: 'Failed to fetch weather data' });
+  } // ✅ Closing brace for the try-catch block is needed here
+}); // ✅ Closing brace for router.post() function
+
+  
 
 
 

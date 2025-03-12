@@ -128,9 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-<<<<<<< HEAD
-=======
 
 # api key
 .env
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d

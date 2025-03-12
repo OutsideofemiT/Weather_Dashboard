@@ -75,21 +75,13 @@ class WeatherService {
   }
 
   // Fetch and destructure location data for a city
-<<<<<<< HEAD
-  async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
-=======
   private async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const locationData = await this.fetchLocationData(city);
     return this.destructureLocationData(locationData);
   }
 
   // Fetch weather data from the OneCall API
-<<<<<<< HEAD
-  async fetchWeatherData(coordinates: Coordinates): Promise<any> {
-=======
   private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const url = this.buildWeatherQuery(coordinates);
     const response = await fetch(url);
     const data = await response.json();
@@ -97,11 +89,7 @@ class WeatherService {
   }
 
   // Fetch forecast data from the forecast endpoint
-<<<<<<< HEAD
-  async fetchForecastData(coordinates: Coordinates): Promise<any> {
-=======
   private async fetchForecastData(coordinates: Coordinates): Promise<any> {
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const url = this.buildForecastQuery(coordinates);
     const response = await fetch(url);
     const data = await response.json();
@@ -134,10 +122,7 @@ class WeatherService {
 
   // Build an array of Weather objects from forecast data (from forecast endpoint)
   private buildForecastArray(forecastList: any[]): Weather[] {
-<<<<<<< HEAD
-=======
     // forecastList is an array of forecast data (3-hour intervals)
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     return forecastList.map((item: any) => {
       return new Weather(
         this.cityName,
@@ -149,11 +134,7 @@ class WeatherService {
     });
   }
 
-<<<<<<< HEAD
-  // Method using the OneCall API for current weather and daily forecast
-=======
   // Existing method using the OneCall API for current weather and daily forecast
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
   async getWeatherForCity(city: string): Promise<{ current: Weather; forecast: Weather[] }> {
     this.cityName = city;
     const coordinates = await this.fetchAndDestructureLocationData(city);
@@ -163,38 +144,11 @@ class WeatherService {
     return { current: currentWeather, forecast };
   }
 
-<<<<<<< HEAD
-  // Method using the forecast endpoint (for 3-hour interval forecasts)
-=======
   // New method using the forecast endpoint
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
   async getForecastForCity(city: string): Promise<Weather[]> {
     this.cityName = city;
     const coordinates = await this.fetchAndDestructureLocationData(city);
     const forecastData = await this.fetchForecastData(coordinates);
-<<<<<<< HEAD
-    return this.buildForecastArray(forecastData.list);
-  }
-
-  // Method to fetch weather data for multiple cities concurrently
-  async getWeatherForCities(cities: string[]): Promise<Array<{ city: string; data: { current: Weather; forecast: Weather[] } | null }>> {
-    const results = await Promise.all(
-      cities.map(async (city) => {
-        try {
-          const data = await this.getWeatherForCity(city);
-          return { city, data };
-        } catch (error) {
-          console.error(`Error fetching weather for ${city}:`, error);
-          return { city, data: null };
-        }
-      })
-    );
-    return results;
-  }
-}
-
-export default new WeatherService();
-=======
     // forecastData.list is an array of forecast items at 3-hour intervals.
     // You might want to filter or group these items; here we simply convert them.
     return this.buildForecastArray(forecastData.list);
@@ -203,4 +157,3 @@ export default new WeatherService();
 
 export default new WeatherService();
 
->>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d

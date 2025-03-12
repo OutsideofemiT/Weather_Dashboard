@@ -31,6 +31,10 @@ interface WeatherData {
 
 const fetchWeather = async (cityName: string) => {
   try {
+    if (!cityName || cityName.trim() === "") {
+      throw new Error("City name is required.");
+    }
+
     const response = await fetch('/api/weather/', {
       method: 'POST',
       headers: {
@@ -40,6 +44,8 @@ const fetchWeather = async (cityName: string) => {
     });
 
     if (!response.ok) {
+      const errorData = await response.json(); // Log API error response
+      console.error("API Error Response:", errorData);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
@@ -54,7 +60,7 @@ const fetchWeather = async (cityName: string) => {
     renderForecast(weatherData.slice(1));
   } catch (error) {
     console.error("Failed to fetch weather data:", error);
-    alert("Failed to fetch weather. Please check the city name and try again.");
+    alert("City not found. Please enter a valid city name.");
   }
 };
 
@@ -233,27 +239,40 @@ Initial Render
 const getAndRenderHistory = async () => {
   try {
     const historyResponse = await fetchSearchHistory();
-    if (historyResponse) {
-      const historyList = await historyResponse.json();
-      renderSearchHistory(historyList);
+
+    if (!historyResponse || !historyResponse.ok) {
+      console.error("Failed to fetch search history.");
+      return;
     }
+
+    const historyList = await historyResponse.json();
+    if (!Array.isArray(historyList)) {
+      console.error("Expected an array but received:", historyList);
+      return;
+    }
+
+    renderSearchHistory(historyList);
   } catch (error) {
     console.error("Error loading search history:", error);
   }
 };
 
-const renderSearchHistory = (historyList: any[]): void => {
-  searchHistoryContainer.innerHTML = '';
-  historyList.forEach((historyItem) => {
-    const historyButton = document.createElement('button');
-    historyButton.textContent = historyItem.city;
-    historyButton.classList.add('history-btn');
-    historyButton.setAttribute('data-city', JSON.stringify(historyItem));
-    searchHistoryContainer.appendChild(historyButton);
-  });
+const renderSearchHistory = (historyList: WeatherData[]): void => {
+  if (searchHistoryContainer) {
+    searchHistoryContainer.innerHTML = '';
+
+    historyList.forEach((historyItem) => {
+      const historyButton = document.createElement('button');
+      historyButton.textContent = historyItem.city;
+      historyButton.classList.add('history-btn');
+      historyButton.setAttribute('data-city', JSON.stringify(historyItem));
+      searchHistoryContainer.append(historyButton);
+    });
+  }
 };
 
 searchForm?.addEventListener('submit', handleSearchFormSubmit);
 searchHistoryContainer?.addEventListener('click', handleSearchHistoryClick);
+searchHistoryContainer?.addEventListener('click', handleDeleteHistoryClick);
 
 getAndRenderHistory();

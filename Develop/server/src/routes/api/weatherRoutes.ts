@@ -6,16 +6,13 @@ import WeatherService from '../../service/weatherService.js';
 
 // POST Request with city name to retrieve weather data
 router.post('/', async (req, res) => {
-  const { city } = req.body;
-  if (!city) {
+  const { cityName } = req.body; // 👈 Change this to match the frontend request
+  if (!cityName) {
     return res.status(400).json({ error: 'City name is required' });
   }
   try {
-    // Use getWeatherForCity (not getWeatherByCity)
-    const weather = await WeatherService.getWeatherForCity(city);
-    // Save city to search history.
-    // Adjust the properties as needed. Here, we're assuming the HistoryService expects an object with name and id.
-    await HistoryService.addCity({ name: city, id: Math.random().toString() });
+    const weather = await WeatherService.getWeatherForCity(cityName);
+    await HistoryService.addCity({ name: cityName, id: Math.random().toString() });
     return res.status(200).json({ weather });
   } catch (error) {
     console.error('Error fetching weather data:', error);

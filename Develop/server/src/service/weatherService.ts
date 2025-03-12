@@ -104,16 +104,23 @@ class WeatherService {
   
     return data;
   }
-  
-  }
 
   // Fetch forecast data from the forecast endpoint
   private async fetchForecastData(coordinates: Coordinates): Promise<any> {
     const url = this.buildForecastQuery(coordinates);
+    console.log(`📅 Fetching forecast data from: ${url}`);
+  
     const response = await fetch(url);
     const data = await response.json();
+    console.log("📊 Forecast API Response:", data);
+  
+    if (!data || !data.list) {
+      throw new Error(`❌ Forecast data unavailable for coordinates: ${JSON.stringify(coordinates)}`);
+    }
+  
     return data;
   }
+  
 
   // Parse current weather data from OneCall API response
   private parseCurrentWeather(response: any): Weather {

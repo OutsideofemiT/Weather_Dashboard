@@ -96,16 +96,25 @@ class WeatherService {
   private async fetchForecastData(coordinates: Coordinates): Promise<any> {
     const url = this.buildForecastQuery(coordinates);
     console.log(`📅 Fetching forecast data from: ${url}`);
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log("📊 Forecast API Response:", data);
-    
-    if (data.cod !== "200") {
-      throw new Error(`❌ Forecast data unavailable for coordinates: ${JSON.stringify(coordinates)}`);
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        console.log("📊 Forecast API Response:", data);
+
+        // ✅ Check if 'list' exists before proceeding
+        if (!data.list) {
+            throw new Error(`❌ Forecast data unavailable for coordinates: ${JSON.stringify(coordinates)}`);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("❌ Error fetching forecast data:", error);
+        return null;  // Return null if there is an error
     }
-    return data;
-  }
+}
+
 
   private parseCurrentWeather(response: any): Weather {
     if (!response.main || !response.weather || response.weather.length === 0) {
@@ -121,42 +130,70 @@ class WeatherService {
   }
 
   private buildForecastArray(forecastList: any[]): Weather[] {
+    if (!Array.isArray(forecastList)) {
+        console.error("❌ Invalid forecast data format:", forecastList);
+        return [];
+    }
+
     return forecastList.map((item: any) => {
-      return new Weather(
-        this.cityName,
-        item.main.temp,
-        item.main.humidity,
-        item.weather[0].description,
-        item.wind.speed
-      );
-    });
-  }
+        if (!item.main || !item.weather || item.weather.length === 0) {
+            console.warn("⚠️ Skipping invalid forecast entry:", item);
+            return null;
+        }
+
+        return new Weather(
+            this.cityName,
+            item.main.temp,
+            item.main.humidity,
+            item.weather[0].description,
+            item.wind.speed
+        );
+    }).filter((weather): weather is Weather => weather !== null);  // Remove null values and ensure type safety
+}
 
   async getWeatherForCity(city: string): Promise<{ current: Weather; forecast: Weather[] }> {
     try {
-      console.log(`✅ Fetching weather for city: ${city}`);
-      const coordinates = await this.fetchLocationData(city).then(this.destructureLocationData);
-      console.log(`📍 Coordinates for ${city}:`, coordinates);
+        console.log(`✅ Fetching weather for city: ${city}`);
 
-      let weatherData = await this.fetchWeatherData(coordinates);
-      if (!weatherData) {
-        console.log("🔄 Falling back to Forecast API...");
-        weatherData = await this.fetchForecastData(coordinates);
-      }
+        // Get coordinates
+        const locationData = await this.fetchLocationData(city);
+        const coordinates = this.destructureLocationData(locationData);
+        console.log(`📍 Coordinates for ${city}:`, coordinates);
 
-      if (!weatherData) {
-        throw new Error(`❌ Weather data unavailable for ${city}`);
-      }
+        // Fetch current weather
+        let weatherData = await this.fetchWeatherData(coordinates);
+        if (!weatherData || !weatherData.main) {
+            console.error(`❌ Error: Missing current weather data for ${city}. Response:`, weatherData);
+            throw new Error(`Current weather data unavailable for ${city}`);
+        }
 
-      const currentWeather = this.parseCurrentWeather(weatherData);
-      const forecast = this.buildForecastArray(weatherData.list);
-      console.log(`✅ Successfully fetched weather for ${city}`);
-      return { current: currentWeather, forecast };
+        // Fetch forecast data separately
+        const forecastData = await this.fetchForecastData(coordinates);
+        if (!forecastData || !forecastData.list) {
+            console.error(`❌ Error: Missing forecast data for ${city}. Response:`, forecastData);
+            throw new Error(`Forecast data unavailable for ${city}`);
+        }
+
+        // ✅ Debug: Log raw responses
+        console.log("🌡️ Weather API Response:", weatherData);
+        console.log("📊 Forecast API Response:", forecastData);
+
+        // Parse current weather
+        const currentWeather = this.parseCurrentWeather(weatherData);
+
+        // ✅ Ensure 'list' exists before mapping
+        const forecast = Array.isArray(forecastData.list)
+            ? this.buildForecastArray(forecastData.list)
+            : [];
+
+        console.log(`✅ Successfully fetched weather for ${city}`);
+        return { current: currentWeather, forecast };
     } catch (error) {
-      console.error("❌ Error in getWeatherForCity:", error);
-      throw error;
-    }
+        console.error("❌ Error in getWeatherForCity:", error);
+        throw error;
+}
   }
+
 }
 
 export default new WeatherService();

@@ -79,8 +79,8 @@ class WeatherService {
 
   // Build URL for OneCall API
   private buildWeatherQuery(coordinates: Coordinates): string {
-    return `${this.weatherBaseUrl}?lat=${coordinates.lat}&lon=${coordinates.lon}&exclude=minutely,hourly,alerts&units=metric&appid=${this.apiKey}`;
-  }
+    return `https://api.openweathermap.org/data/2.5/weather?lat=${coordinates.lat}&lon=${coordinates.lon}&units=metric&appid=${this.apiKey}`;
+}
 
   // Build URL for Forecast API
   private buildForecastQuery(coordinates: Coordinates): string {

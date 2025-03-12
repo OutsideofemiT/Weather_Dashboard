@@ -133,14 +133,20 @@ class WeatherService {
 
   // Parse OneCall API response
   private parseCurrentWeather(response: any): Weather {
+    console.log("✅ Raw Weather API Response:", response); // Debugging log
+
+    if (!response.main || !response.weather || response.weather.length === 0) {
+        throw new Error("❌ Invalid weather data format.");
+    }
+
     return new Weather(
-      this.cityName,
-      response.current.temp,
-      response.current.humidity,
-      response.current.weather[0].description,
-      response.current.wind_speed
+        response.name,  // City name
+        response.main.temp,  // Temperature (Kelvin, convert if needed)
+        response.main.humidity, // Humidity
+        response.weather[0].description, // Weather description
+        response.wind.speed // Wind speed
     );
-  }
+}
 
   // Convert daily forecast from OneCall API
   private buildDailyForecastArray(dailyForecast: any[]): Weather[] {

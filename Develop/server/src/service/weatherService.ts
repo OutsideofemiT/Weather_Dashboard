@@ -92,7 +92,8 @@ class WeatherService {
   // Fetch weather data from the OneCall API
   private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
     const url = this.buildWeatherQuery(coordinates);
-    console.log(`🌦️ Fetching weather data from: ${url}`);
+    console.log(`🌦️ Fetching weather data from: "${url}"`); // ✅ Log the full URL
+    console.log("🔑 Using API Key:", this.apiKey); // ✅ Check if API Key is correct
   
     const response = await fetch(url);
     const data = await response.json();
@@ -104,6 +105,7 @@ class WeatherService {
   
     return data;
   }
+  
 
   // Fetch forecast data from the forecast endpoint
   private async fetchForecastData(coordinates: Coordinates): Promise<any> {

@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 
+<<<<<<< HEAD
 // https://vitejs.dev/config/
+=======
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
 export default defineConfig({
   server: {
     port: 3000,

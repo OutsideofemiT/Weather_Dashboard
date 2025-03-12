@@ -30,7 +30,9 @@ export class Weather {
   }
 }
 
+// Complete the WeatherService class
 class WeatherService {
+  // Define the base URLs, API key, and city name property
   private apiKey: string;
   private geocodeBaseUrl: string;
   private weatherBaseUrl: string;   // For OneCall API
@@ -40,7 +42,7 @@ class WeatherService {
   constructor() {
     this.apiKey = process.env.OPENWEATHER_API_KEY || '';
     // OpenWeather Geocoding API endpoint
-    this.geocodeBaseUrl = 'https://api.openweathermap.org/geo/1.0/direct';
+    this.geocodeBaseUrl = 'http://api.openweathermap.org/geo/1.0/direct';
     // OpenWeather OneCall API endpoint (for current weather + daily forecast)
     this.weatherBaseUrl = 'https://api.openweathermap.org/data/2.5/onecall';
     // OpenWeather Forecast API endpoint (returns forecast data at 3-hour intervals)
@@ -48,7 +50,7 @@ class WeatherService {
   }
 
   // Fetch location data for a given city query
-  async fetchLocationData(query: string): Promise<any> {
+  private async fetchLocationData(query: string): Promise<any> {
     const url = `${this.geocodeBaseUrl}?q=${encodeURIComponent(query)}&appid=${this.apiKey}`;
     const response = await fetch(url);
     const data = await response.json();
@@ -57,17 +59,10 @@ class WeatherService {
 
   // Destructure location data to obtain coordinates
   private destructureLocationData(locationData: any): Coordinates {
-    if (!Array.isArray(locationData)) {
-      console.error('Expected an array from geocoding API, but received:', locationData);
-      throw new Error('Unexpected response format from geocoding API.');
-    }
-    if (locationData.length === 0) {
-      throw new Error('No location data found for the specified city.');
-    }
+    // Assumes locationData is an array with at least one element
     const { lat, lon } = locationData[0];
     return { lat, lon };
   }
-  
 
   // Build the query URL for the OneCall API
   private buildWeatherQuery(coordinates: Coordinates): string {
@@ -80,13 +75,21 @@ class WeatherService {
   }
 
   // Fetch and destructure location data for a city
+<<<<<<< HEAD
   async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
+=======
+  private async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const locationData = await this.fetchLocationData(city);
     return this.destructureLocationData(locationData);
   }
 
   // Fetch weather data from the OneCall API
+<<<<<<< HEAD
   async fetchWeatherData(coordinates: Coordinates): Promise<any> {
+=======
+  private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const url = this.buildWeatherQuery(coordinates);
     const response = await fetch(url);
     const data = await response.json();
@@ -94,7 +97,11 @@ class WeatherService {
   }
 
   // Fetch forecast data from the forecast endpoint
+<<<<<<< HEAD
   async fetchForecastData(coordinates: Coordinates): Promise<any> {
+=======
+  private async fetchForecastData(coordinates: Coordinates): Promise<any> {
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     const url = this.buildForecastQuery(coordinates);
     const response = await fetch(url);
     const data = await response.json();
@@ -127,6 +134,10 @@ class WeatherService {
 
   // Build an array of Weather objects from forecast data (from forecast endpoint)
   private buildForecastArray(forecastList: any[]): Weather[] {
+<<<<<<< HEAD
+=======
+    // forecastList is an array of forecast data (3-hour intervals)
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
     return forecastList.map((item: any) => {
       return new Weather(
         this.cityName,
@@ -138,7 +149,11 @@ class WeatherService {
     });
   }
 
+<<<<<<< HEAD
   // Method using the OneCall API for current weather and daily forecast
+=======
+  // Existing method using the OneCall API for current weather and daily forecast
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
   async getWeatherForCity(city: string): Promise<{ current: Weather; forecast: Weather[] }> {
     this.cityName = city;
     const coordinates = await this.fetchAndDestructureLocationData(city);
@@ -148,11 +163,16 @@ class WeatherService {
     return { current: currentWeather, forecast };
   }
 
+<<<<<<< HEAD
   // Method using the forecast endpoint (for 3-hour interval forecasts)
+=======
+  // New method using the forecast endpoint
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
   async getForecastForCity(city: string): Promise<Weather[]> {
     this.cityName = city;
     const coordinates = await this.fetchAndDestructureLocationData(city);
     const forecastData = await this.fetchForecastData(coordinates);
+<<<<<<< HEAD
     return this.buildForecastArray(forecastData.list);
   }
 
@@ -174,3 +194,13 @@ class WeatherService {
 }
 
 export default new WeatherService();
+=======
+    // forecastData.list is an array of forecast items at 3-hour intervals.
+    // You might want to filter or group these items; here we simply convert them.
+    return this.buildForecastArray(forecastData.list);
+  }
+}
+
+export default new WeatherService();
+
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d

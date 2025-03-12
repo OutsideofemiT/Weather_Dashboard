@@ -9,8 +9,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "typescript": "^5.4.5",
     "vite": "^5.2.0"
+=======
+    "typescript": "^5.8.2",
+    "vite": "^5.4.14"
+>>>>>>> e18e54ee5fd6588ada02d15366cd519a0acc341d
   },
   "dependencies": {
     "dayjs": "^1.11.10"

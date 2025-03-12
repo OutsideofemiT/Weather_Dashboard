@@ -52,10 +52,19 @@ class WeatherService {
   // Fetch location data for a given city query
   private async fetchLocationData(query: string): Promise<any> {
     const url = `${this.geocodeBaseUrl}?q=${encodeURIComponent(query)}&appid=${this.apiKey}`;
+    console.log(`🔍 Fetching location data from: ${url}`);
+  
     const response = await fetch(url);
     const data = await response.json();
+    console.log("📍 Location API Response:", data);
+  
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error(`❌ No location found for city: ${query}`);
+    }
+  
     return data;
   }
+  
 
   // Destructure location data to obtain coordinates
   private destructureLocationData(locationData: any): Coordinates {
@@ -83,9 +92,19 @@ class WeatherService {
   // Fetch weather data from the OneCall API
   private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
     const url = this.buildWeatherQuery(coordinates);
+    console.log(`🌦️ Fetching weather data from: ${url}`);
+  
     const response = await fetch(url);
     const data = await response.json();
+    console.log("🌡️ Weather API Response:", data);
+  
+    if (!data || !data.current) {
+      throw new Error(`❌ Weather data unavailable for coordinates: ${JSON.stringify(coordinates)}`);
+    }
+  
     return data;
+  }
+  
   }
 
   // Fetch forecast data from the forecast endpoint

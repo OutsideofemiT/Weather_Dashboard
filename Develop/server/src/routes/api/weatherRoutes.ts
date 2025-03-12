@@ -6,19 +6,33 @@ import WeatherService from '../../service/weatherService.js';
 
 // POST Request with city name to retrieve weather data
 router.post('/', async (req, res) => {
-  const { cityName } = req.body; // 👈 Change this to match the frontend request
+  const { cityName } = req.body;
   if (!cityName) {
+    console.error("❌ Missing cityName in request body.");
     return res.status(400).json({ error: 'City name is required' });
   }
+
   try {
+    console.log(`✅ Fetching weather for: ${cityName}`);
+
     const weather = await WeatherService.getWeatherForCity(cityName);
+
+    if (!weather) {
+      console.error(`❌ WeatherService returned null for city: ${cityName}`);
+      return res.status(404).json({ error: "City not found" });
+    }
+
+    console.log("✅ Weather Data:", weather);
+
     await HistoryService.addCity({ name: cityName, id: Math.random().toString() });
+
     return res.status(200).json({ weather });
   } catch (error) {
-    console.error('Error fetching weather data:', error);
+    console.error("❌ Error fetching weather data:", error);
     return res.status(500).json({ error: 'Failed to fetch weather data' });
   }
 });
+
 
 // GET search history
 router.get('/history', async (_req, res) => {

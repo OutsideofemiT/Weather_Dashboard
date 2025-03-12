@@ -30,24 +30,30 @@ interface WeatherData {
 
 const fetchWeather = async (cityName: string) => {
   try {
-    if (!cityName.trim()) {
-      throw new Error("City name is required.");
+    if (!cityName || cityName.trim() === "") {
+      console.error("❌ City name is empty, preventing API request.");
+      alert("Please enter a city name.");
+      return;
     }
+
+    console.log(`✅ Fetching weather for: ${cityName}`);
 
     const response = await fetch('/api/weather/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cityName }),
+      body: JSON.stringify({ cityName: cityName.trim() }), // ✅ Ensure valid JSON
     });
+
+    console.log("✅ Raw API Response:", response);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("API Error Response:", errorData);
+      console.error("❌ API Error Response:", errorData);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
-    const weatherData: WeatherData[] = await response.json();
-    console.log('Weather Data:', weatherData);
+    const weatherData = await response.json();
+    console.log('✅ Received Weather Data:', weatherData);
 
     if (!Array.isArray(weatherData) || weatherData.length === 0) {
       throw new Error("Invalid weather data received");
@@ -56,10 +62,11 @@ const fetchWeather = async (cityName: string) => {
     renderCurrentWeather(weatherData[0]);
     renderForecast(weatherData.slice(1));
   } catch (error) {
-    console.error("Failed to fetch weather data:", error);
+    console.error("❌ Failed to fetch weather data:", error);
     alert("City not found. Please enter a valid city name.");
   }
 };
+
 
 const fetchSearchHistory = async (): Promise<WeatherData[]> => {
   try {

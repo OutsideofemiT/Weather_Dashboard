@@ -7,7 +7,7 @@ This application lets travelers view current and 5-day weather forecasts for mul
 API Endpoint Example:
 
 
-### https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API key}
+### https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_Key}
 Note: After registering for a new API key, it may take up to 2 hours for the key to activate.
 
 ## User Story

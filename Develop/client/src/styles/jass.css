@@ -1916,3 +1916,11 @@ label form [type='radio'] {
   background: -moz-linear-gradient(right, #20084a, #3463bc);
   background: linear-gradient(to left, #20084a, #3463bc);
 }
+.history-list {
+  list-style: none;
+  padding: 0;
+}
+
+.history-list li {
+  margin-bottom: 5px;
+}

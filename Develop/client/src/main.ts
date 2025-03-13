@@ -209,25 +209,28 @@ if (forecast.icon) {
 };
 
 // ✅ Render Search History
-const renderSearchHistory = (historyList: string[]) => {
+const renderSearchHistory = (historyList) => {
   if (!searchHistoryContainer) return;
   searchHistoryContainer.innerHTML = '';
 
-  if (historyList.length === 0) {
-    searchHistoryContainer.innerHTML = '<p>No recent searches available.</p>';
-    return;
-  }
+  const list = document.createElement('ul');
+  list.classList.add('history-list'); // Add class for styling if needed
 
   historyList.forEach(city => {
+    const listItem = document.createElement('li');
     const button = document.createElement('button');
     button.textContent = city;
     button.classList.add('history-btn');
     button.addEventListener('click', () => fetchWeather(city));
-    searchHistoryContainer.appendChild(button);
+
+    listItem.appendChild(button);
+    list.appendChild(listItem);
   });
 
+  searchHistoryContainer.appendChild(list);
   console.log("✅ Search History Rendered:", historyList);
 };
+
 
 
 // ✅ Fetch & Render Search History on Load

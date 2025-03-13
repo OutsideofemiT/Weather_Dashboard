@@ -163,8 +163,9 @@ const renderForecastCard = (forecast: WeatherData) => {
   // ✅ Ensure correct date formatting
   let formattedDate = "N/A";
   if (forecast.date) {
-    const dateObj = new Date(Number(forecast.date) * 1000);
-    if (!isNaN(dateObj.getTime())) {
+    const dateNumber = Number(forecast.date); // Convert to number
+    if (!isNaN(dateNumber)) {
+      const dateObj = new Date(dateNumber * 1000); // Convert from seconds to milliseconds
       formattedDate = dateObj.toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
@@ -172,9 +173,9 @@ const renderForecastCard = (forecast: WeatherData) => {
       });
     }
   }
-
-  const cardTitle = document.createElement("h5");
-  cardTitle.textContent = formattedDate;
+  
+const cardTitle = document.createElement("h5");
+cardTitle.textContent = formattedDate;
 
   // ✅ Ensure correct weather icon is shown
   const weatherIcon = document.createElement("img");

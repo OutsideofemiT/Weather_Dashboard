@@ -1,14 +1,18 @@
 ## Weather Dashboard
-External APIs allow developers to access data and functionality by making requests with specific parameters to a URL. This Weather Dashboard application demonstrates how to call the OpenWeather API, retrieve weather data, and render it in the browser.
+# Description
+This Weather Dashboard app allows travelers to view current weather and 5-day forecasts for multiple cities by consuming the OpenWeather API. The front end is already built, and the challenge was to build the back end, integrate with the API, and deploy the complete application to Render.
 
-## Description
-This application lets travelers view current and 5-day weather forecasts for multiple cities. The front end has been provided; your task is to build the back end to connect to the OpenWeather API, manage search history, and deploy the full-stack application to Render.
-
-API Endpoint Example:
-
-
-### https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_Key}
-Note: After registering for a new API key, it may take up to 2 hours for the key to activate.
+# Key Features
+🚀 Real-Time Weather Data:
+Fetch current weather and 5-day forecasts from OpenWeather.
+🌍 Multiple City Searches:
+Search for any city and view its weather conditions.
+📝 Search History:
+Save and retrieve your recent searches.
+📡 API Integration:
+Handle API calls server-side to securely parse and send data to the client.
+☁️ Deployment Ready:
+Deploy seamlessly using Render.
 
 ## User Story
 AS A traveler
@@ -26,9 +30,9 @@ Search History:
 When a user clicks a city in the search history, the app displays that city’s weather data again.
 
 
-Getting Started
+## Getting Started
 
-## Installation
+# Installation
 Clone the Repository: git clone https://github.com/YourUsername/Weather_Dashboard.git
 
 cd Develop
@@ -92,9 +96,9 @@ Use a package like uuid to assign unique IDs to saved city entries.
 This project is open-source and available under the MIT License.
 
 ## Acknowledgments
-OpenWeather API Documentation
-Render Documentation on Web Services
-Starter code provided for the Weather Dashboard assignment.
-Special thanks to the community and mentors for their support.
-Contact
+📖 OpenWeather API Documentation
+🚀 Render Documentation on Web Services
+🎓 Starter code provided for the Weather Dashboard assignment.
+🙏 Special thanks to the community and mentors for their support.
+## Contact
 For any questions or feedback, please contact [outsideofemit@gmail.com] or open an issue in the repository.

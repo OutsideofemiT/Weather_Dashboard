@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import weatherRoutes from './routes/api/weatherRoutes.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -12,9 +13,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import and use your routes
-import routes from './routes/index.js';
-app.use(routes);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Listening on PORT: ${PORT}`));
+app.use('/api/weather', weatherRoutes);
+
+const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+app.listen(PORT, '0.0.0.0', () => console.log(`Listening on PORT: ${PORT}`));

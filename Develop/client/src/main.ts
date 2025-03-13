@@ -36,7 +36,7 @@ const fetchWeather = async (cityName: string) => {
     const response = await fetch('/api/weather/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cityName: cityName.trim(), units: 'metric' }), // 🔹 Fetch data in Celsius
+      body: JSON.stringify({ cityName: cityName.trim(), units: 'imperial' }), // Fetch Fahrenheit data
     });
 
     if (!response.ok) {
@@ -52,22 +52,19 @@ const fetchWeather = async (cityName: string) => {
 
     renderCurrentWeather(weatherData.current);
     renderForecast(weatherData.forecast);
-    getAndRenderHistory(); // Update search history
+
+    // ✅ Save to Search History in Local Storage
+    let historyList = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+    if (!historyList.includes(cityName)) {
+      historyList.unshift(cityName); // Add to the beginning of the array
+      if (historyList.length > 5) historyList.pop(); // Keep only 5 entries
+      localStorage.setItem("searchHistory", JSON.stringify(historyList));
+    }
+
+    getAndRenderHistory(); // ✅ Refresh history UI
   } catch (error) {
     console.error("Failed to fetch weather data:", error);
     alert("City not found. Please enter a valid city name.");
-  }
-};
-
-// Fetch Search History
-const fetchSearchHistory = async (): Promise<string[]> => {
-  try {
-    const response = await fetch('/api/weather/history');
-    if (!response.ok) throw new Error("Failed to fetch search history");
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching search history:", error);
-    return [];
   }
 };
 
@@ -78,9 +75,13 @@ const renderCurrentWeather = (currentWeather: WeatherData) => {
     return;
   }
 
+  if (!currentWeather) {
+    console.error("❌ No weather data available.");
+    return;
+  }
+
   console.log("🔍 Debug: Current Weather Data:", currentWeather);
 
-  // ✅ Display formatted date
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -89,20 +90,23 @@ const renderCurrentWeather = (currentWeather: WeatherData) => {
 
   heading.textContent = `${currentWeather.city} (${formattedDate})`;
 
-  // ✅ Display temperature in Celsius
-  tempEl.textContent = `Temp: ${currentWeather.temperature.toFixed(1) ?? 'N/A'}°C`;
-  windEl.textContent = `Wind: ${currentWeather.windSpeed.toFixed(2) ?? 'N/A'} m/s`; // Adjust wind speed unit to m/s
+  // ✅ Convert Celsius to Fahrenheit
+  const tempFahrenheit = (currentWeather.temperature * 9/5) + 32;
+  tempEl.textContent = `Temp: ${tempFahrenheit.toFixed(1) ?? 'N/A'} °F`; 
+
+  windEl.textContent = `Wind: ${currentWeather.windSpeed ?? 'N/A'} m/s`;
   humidityEl.textContent = `Humidity: ${currentWeather.humidity ?? 'N/A'}%`;
 
-  // ✅ Show weather description
   const weatherDescription = document.createElement('p');
   weatherDescription.textContent = currentWeather.description ?? "No description available";
 
-  // ✅ Ensure valid weather icon
-  weatherIcon.src = currentWeather.icon
-    ? `https://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`
-    : 'https://openweathermap.org/img/wn/01d@2x.png';
-  weatherIcon.alt = currentWeather.description || 'Weather icon';
+  // ✅ Fix Weather Icon Display
+  if (currentWeather.icon) {
+    weatherIcon.src = `https://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`;
+    weatherIcon.alt = currentWeather.description || 'Weather icon';
+  } else {
+    weatherIcon.src = 'https://openweathermap.org/img/wn/01d@2x.png'; // Default sunny icon
+  }
 
   todayContainer.innerHTML = ''; // Clear previous content
   todayContainer.appendChild(heading);
@@ -113,63 +117,88 @@ const renderCurrentWeather = (currentWeather: WeatherData) => {
   todayContainer.appendChild(weatherDescription);
 };
 
+
 // ✅ Render 5-Day Forecast
-const renderForecast = (forecast: WeatherData[]) => {
+const renderForecast = (forecastData: any[]) => {
   if (!forecastContainer) return;
   forecastContainer.innerHTML = '<h4 class="col-12">5-Day Forecast:</h4>';
 
-  // ✅ Select 5 daily forecasts
-  const dailyForecasts = forecast.slice(0, 5);
+  const dailyForecasts: any[] = [];
+  const usedDates = new Set();
+
+  for (const forecast of forecastData) {
+    // Convert Unix timestamp to readable format
+    const forecastDate = new Date(forecast.date * 1000).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+
+    if (!usedDates.has(forecastDate)) {
+      usedDates.add(forecastDate);
+      dailyForecasts.push(forecast);
+    }
+
+    if (dailyForecasts.length === 5) break; // Stop after 5 days
+  }
+
   dailyForecasts.forEach(renderForecastCard);
 };
+
 
 // ✅ Render Individual Forecast Card
 const renderForecastCard = (forecast: WeatherData) => {
   if (!forecastContainer) return;
-
   console.log("🔍 Debug: Forecast Data:", forecast);
 
-  const col = document.createElement('div');
-  col.classList.add('col-auto');
+  const col = document.createElement("div");
+  col.classList.add("col-auto");
 
-  const card = document.createElement('div');
-  card.classList.add('forecast-card', 'card', 'text-white', 'bg-primary', 'h-100');
+  const card = document.createElement("div");
+  card.classList.add("forecast-card", "card", "text-white", "bg-primary", "h-100");
 
-  const cardBody = document.createElement('div');
-  cardBody.classList.add('card-body', 'p-2');
+  const cardBody = document.createElement("div");
+  cardBody.classList.add("card-body", "p-2");
 
-  // ✅ Format Date Properly
-  let formattedDate = "Invalid Date";
+  // ✅ Ensure correct date formatting
+  let formattedDate = "N/A";
   if (forecast.date) {
-    const dateObj = new Date(forecast.date);
+    const dateObj = new Date(Number(forecast.date) * 1000);
     if (!isNaN(dateObj.getTime())) {
-      formattedDate = dateObj.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
+      formattedDate = dateObj.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
       });
     }
   }
 
-  const cardTitle = document.createElement('h5');
+  const cardTitle = document.createElement("h5");
   cardTitle.textContent = formattedDate;
 
-  const weatherIcon = document.createElement('img');
+  // ✅ Ensure correct weather icon is shown
+  const weatherIcon = document.createElement("img");
   weatherIcon.src = forecast.icon
     ? `https://openweathermap.org/img/wn/${forecast.icon}@2x.png`
-    : 'https://openweathermap.org/img/wn/01d@2x.png';
-  weatherIcon.alt = forecast.description || 'Weather icon';
+    : "https://openweathermap.org/img/wn/01d@2x.png"; // Default icon
+  weatherIcon.alt = forecast.description || "Weather icon";
 
-  const tempEl = document.createElement('p');
-  tempEl.textContent = `Temp: ${forecast.temperature.toFixed(1) ?? 'N/A'} °C`;
+  // ✅ Convert Temperature to Fahrenheit
+  const tempFahrenheit = (forecast.temperature * 9) / 5 + 32;
+  const tempEl = document.createElement("p");
+  tempEl.textContent = `Temp: ${tempFahrenheit.toFixed(1) ?? "N/A"} °F`;
 
-  const windEl = document.createElement('p');
-  windEl.textContent = `Wind: ${forecast.windSpeed.toFixed(2) ?? 'N/A'} m/s`;
+  const windEl = document.createElement("p");
+  windEl.textContent = `Wind: ${forecast.windSpeed ?? "N/A"} m/s`;
 
-  const humidityEl = document.createElement('p');
-  humidityEl.textContent = `Humidity: ${forecast.humidity ?? 'N/A'}%`;
+  const humidityEl = document.createElement("p");
+  humidityEl.textContent = `Humidity: ${forecast.humidity ?? "N/A"}%`;
 
-  cardBody.append(cardTitle, weatherIcon, tempEl, windEl, humidityEl);
+  // ✅ Add weather description
+  const weatherDescription = document.createElement("p");
+  weatherDescription.textContent = forecast.description ?? "No description available";
+
+  cardBody.append(cardTitle, weatherIcon, tempEl, windEl, humidityEl, weatherDescription);
   card.append(cardBody);
   col.append(card);
   forecastContainer.append(col);
@@ -179,6 +208,12 @@ const renderForecastCard = (forecast: WeatherData) => {
 const renderSearchHistory = (historyList: string[]) => {
   if (!searchHistoryContainer) return;
   searchHistoryContainer.innerHTML = '';
+
+  if (historyList.length === 0) {
+    searchHistoryContainer.innerHTML = '<p>No recent searches available.</p>';
+    return;
+  }
+
   historyList.forEach(city => {
     const button = document.createElement('button');
     button.textContent = city;
@@ -186,14 +221,23 @@ const renderSearchHistory = (historyList: string[]) => {
     button.addEventListener('click', () => fetchWeather(city));
     searchHistoryContainer.appendChild(button);
   });
+
   console.log("✅ Search History Rendered:", historyList);
 };
 
-// ✅ Fetch & Render Search History
+
+// ✅ Fetch & Render Search History on Load
 const getAndRenderHistory = async () => {
-  const historyList = await fetchSearchHistory();
+  let historyList = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+
+  if (!Array.isArray(historyList)) {
+    historyList = [];
+  }
+
   renderSearchHistory(historyList);
 };
+
+
 
 // ✅ Event Listener for Search Form
 if (searchForm && searchInput) {

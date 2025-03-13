@@ -178,11 +178,14 @@ const cardTitle = document.createElement("h5");
 cardTitle.textContent = formattedDate;
 
   // ✅ Ensure correct weather icon is shown
-  const weatherIcon = document.createElement("img");
-  weatherIcon.src = forecast.icon
-    ? `https://openweathermap.org/img/wn/${forecast.icon}@2x.png`
-    : "https://openweathermap.org/img/wn/01d@2x.png"; // Default icon
-  weatherIcon.alt = forecast.description || "Weather icon";
+  const weatherIcon = document.createElement('img');
+if (forecast.icon) {
+  weatherIcon.src = `https://openweathermap.org/img/wn/${forecast.icon}@2x.png`;
+  weatherIcon.alt = forecast.description || 'Weather icon';
+} else {
+  weatherIcon.src = 'https://openweathermap.org/img/wn/01d@2x.png'; // Default icon
+}
+
 
   // ✅ Convert Temperature to Fahrenheit
   const tempFahrenheit = (forecast.temperature * 9) / 5 + 32;

@@ -66,35 +66,17 @@ Create a New Web Service on Render and connect it to your GitHub repository.
 Set the Build Command to:
 
 npm run render-build
-Set the Start Command to: npm run start
+
+Set the Start Command to: 
+
+npm run start
 
 Configure Environment Variables on Render (e.g., API_KEY).
 
 Render’s system will use these commands to build and start your service, ensuring that your server binds to the correct port.
 
-API Endpoints
-HTML Route
-GET *
-Returns the index.html file from the client build folder.
-API Routes
-GET /api/weather/history
-Reads searchHistory.json and returns all saved cities as JSON.
-
-POST /api/weather
-Receives a city name in the request body, saves it to searchHistory.json (assigning a unique id), and returns associated weather data from the OpenWeather API.
-
-(Bonus) DELETE /api/weather/history/:id
-Receives the id of a city to delete, removes the city from searchHistory.json, and updates the file.
-
-Implementation Hints
-Coordinates Requirement:
-The 5-day weather forecast API requires geographical coordinates. Use the OpenWeatherMap Geocoding API to convert a city name to latitude and longitude.
-
-Server-Side API Calls:
-Fetch weather data from the OpenWeather API on the server side, parse the response, and then send the data to the client.
-
-Unique IDs:
-Use a package like uuid to assign unique IDs to saved city entries.
+## DEMO : https://weather-dashboard-nhbc.onrender.com/
+![image](https://github.com/user-attachments/assets/371a11d8-95aa-47e2-ab3b-4eb7f0a9df03)
 
 ## License
 This project is open-source and available under the MIT License.

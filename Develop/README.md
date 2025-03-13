@@ -5,12 +5,16 @@ This Weather Dashboard app allows travelers to view current weather and 5-day fo
 # Key Features
 🚀 Real-Time Weather Data:
 Fetch current weather and 5-day forecasts from OpenWeather.
+
 🌍 Multiple City Searches:
 Search for any city and view its weather conditions.
+
 📝 Search History:
 Save and retrieve your recent searches.
+
 📡 API Integration:
 Handle API calls server-side to securely parse and send data to the client.
+
 ☁️ Deployment Ready:
 Deploy seamlessly using Render.
 

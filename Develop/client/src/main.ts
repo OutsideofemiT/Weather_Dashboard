@@ -12,33 +12,71 @@ const tempEl = document.getElementById('temp') as HTMLParagraphElement | null;
 const windEl = document.getElementById('wind') as HTMLParagraphElement | null;
 const humidityEl = document.getElementById('humidity') as HTMLParagraphElement | null;
 
-const API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"; // ✅ Replace with your API Key
-
-// Weather Data Interface
+// Weather Data Interface for current weather and daily forecast objects from your backend
 interface WeatherData {
   city: string;
-  date: number;
-  icon: string;
+  date: string; // May be a Unix timestamp (in seconds) or a preformatted string; if missing, we'll compute it.
+  icon: string; // May be missing in your data.
   iconDescription: string;
-  temperature: number;
+  temperature: number; // Returned in Celsius (since units: 'metric')
   windSpeed: number;
   humidity: number;
   description?: string;
-  coord?: { lat: number; lon: number };
 }
 
-// ✅ Fetch Weather Data
+/**
+ * Helper: Convert Celsius to Fahrenheit.
+ */
+const celsiusToFahrenheit = (celsius: number): number => (celsius * 9) / 5 + 32;
+
+/**
+ * Helper: Map a weather description to an OpenWeather icon code.
+ */
+const mapDescriptionToIcon = (desc: string): string => {
+  const lower = desc.toLowerCase();
+  if (lower.includes("clear")) return "01d";
+  if (lower.includes("few clouds")) return "02d";
+  if (lower.includes("scattered clouds")) return "03d";
+  if (lower.includes("broken clouds") || lower.includes("overcast")) return "04d";
+  if (lower.includes("shower rain")) return "09d";
+  if (lower.includes("rain")) return "10d";
+  if (lower.includes("thunderstorm")) return "11d";
+  if (lower.includes("snow")) return "13d";
+  if (lower.includes("mist")) return "50d";
+  return "01d";
+};
+
+/**
+ * Helper: If a forecast item does not have a date, compute it as today's date plus (index+1) days.
+ */
+const computeForecastDate = (index: number): string => {
+  const today = new Date();
+  const forecastDate = new Date(today.getTime() + (index + 1) * 24 * 60 * 60 * 1000);
+  return forecastDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+/**
+ * Fetch Weather Data from your backend.
+ * Assumes your backend returns an object with properties "current" and "forecast".
+ */
 const fetchWeather = async (cityName: string) => {
   try {
     if (!cityName.trim()) {
       alert("Please enter a city name.");
       return;
     }
-
     console.log(`Fetching weather for: ${cityName}`);
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=imperial&appid=${API_KEY}`
-    );
+
+    const response = await fetch('/api/weather/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Request metric units; we’ll convert to Fahrenheit on the client.
+      body: JSON.stringify({ cityName: cityName.trim(), units: 'metric' }),
+    });
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -46,27 +84,16 @@ const fetchWeather = async (cityName: string) => {
 
     const weatherData = await response.json();
     console.log("🔍 Debug: Full Weather Data Response:", weatherData);
+    console.log("🔍 Forecast Array:", weatherData.forecast);
 
-    const currentWeather: WeatherData = {
-      city: weatherData.name,
-      date: weatherData.dt,
-      icon: weatherData.weather[0].icon,
-      iconDescription: weatherData.weather[0].description,
-      temperature: weatherData.main.temp,
-      windSpeed: weatherData.wind.speed,
-      humidity: weatherData.main.humidity,
-      description: weatherData.weather[0].description,
-      coord: weatherData.coord, // ✅ Store lat/lon for 5-day forecast
-    };
-
-    renderCurrentWeather(currentWeather);
-
-    // ✅ Fetch 5-Day Forecast Using Latitude & Longitude
-    if (currentWeather.coord) {
-      fetchForecast(currentWeather.coord.lat, currentWeather.coord.lon);
+    if (!weatherData || !weatherData.current || !weatherData.forecast.length) {
+      throw new Error("Invalid weather data received");
     }
 
-    // ✅ Save to Search History in Local Storage
+    renderCurrentWeather(weatherData.current);
+    renderForecast(weatherData.forecast);
+
+    // Save to Search History in Local Storage
     let historyList = JSON.parse(localStorage.getItem("searchHistory") || "[]");
     if (!historyList.includes(cityName)) {
       historyList.unshift(cityName);
@@ -81,27 +108,10 @@ const fetchWeather = async (cityName: string) => {
   }
 };
 
-// ✅ Fetch 5-Day Forecast
-const fetchForecast = async (lat: number, lon: number) => {
-  try {
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${API_KEY}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const forecastData = await response.json();
-    console.log("🔍 Debug: 5-Day Forecast Data:", forecastData);
-
-    renderForecast(forecastData.list);
-  } catch (error) {
-    console.error("Failed to fetch forecast data:", error);
-  }
-};
-
-// ✅ Render Current Weather
+/**
+ * Render current weather.
+ * Converts temperature from Celsius to Fahrenheit.
+ */
 const renderCurrentWeather = (currentWeather: WeatherData) => {
   if (!heading || !weatherIcon || !tempEl || !windEl || !humidityEl || !todayContainer) {
     console.error("❌ Missing DOM elements. Check your HTML structure.");
@@ -110,48 +120,67 @@ const renderCurrentWeather = (currentWeather: WeatherData) => {
 
   console.log("🔍 Debug: Current Weather Data:", currentWeather);
 
-  const formattedDate = new Date(currentWeather.date * 1000).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
+  const formattedDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
   });
-
   heading.textContent = `${currentWeather.city} (${formattedDate})`;
-  tempEl.textContent = `Temp: ${currentWeather.temperature.toFixed(1)} °F`;
+
+  // Convert current temperature from Celsius to Fahrenheit.
+  const tempFahrenheit = celsiusToFahrenheit(currentWeather.temperature);
+  tempEl.textContent = `Temp: ${tempFahrenheit.toFixed(1)} °F`;
   windEl.textContent = `Wind: ${currentWeather.windSpeed} m/s`;
   humidityEl.textContent = `Humidity: ${currentWeather.humidity}%`;
 
-  const weatherDescription = document.createElement("p");
+  const weatherDescription = document.createElement('p');
   weatherDescription.textContent = currentWeather.description ?? "No description available";
 
-  // ✅ Fix Weather Icon
-  if (currentWeather.icon) {
-    weatherIcon.src = `https://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`;
-    weatherIcon.alt = currentWeather.iconDescription || "Weather icon";
+  // Use icon if available; if not, fallback using description mapping.
+  let iconCode = currentWeather.icon;
+  if (!iconCode && currentWeather.description) {
+    iconCode = mapDescriptionToIcon(currentWeather.description);
+  }
+  if (iconCode) {
+    weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+    weatherIcon.alt = currentWeather.description || 'Weather icon';
+  } else {
+    weatherIcon.src = 'https://openweathermap.org/img/wn/01d@2x.png';
   }
 
-  todayContainer.innerHTML = "";
+  todayContainer.innerHTML = '';
   todayContainer.appendChild(heading);
   todayContainer.appendChild(weatherIcon);
   todayContainer.appendChild(tempEl);
   todayContainer.appendChild(windEl);
   todayContainer.appendChild(humidityEl);
   todayContainer.appendChild(weatherDescription);
+  console.log("Current Weather Icon:", currentWeather.icon);
 };
 
-// ✅ Render 5-Day Forecast
-const renderForecast = (forecastList: any[]) => {
+/**
+ * Render the 5-day forecast.
+ * We assume your backend returns an array of forecast objects.
+ * If forecast.date is missing, we compute a date based on the index.
+ */
+const renderForecast = (forecastData: WeatherData[]) => {
   if (!forecastContainer) return;
   forecastContainer.innerHTML = '<h4 class="col-12">5-Day Forecast:</h4>';
 
-  const dailyForecasts = forecastList.filter((_, index) => index % 8 === 0).slice(0, 5);
-
-  dailyForecasts.forEach(renderForecastCard);
+  // Take the first 5 forecast items
+  const dailyForecasts = forecastData.slice(0, 5);
+  dailyForecasts.forEach((item, index) => renderForecastCard(item, index));
 };
 
-// ✅ Render Individual Forecast Card
-const renderForecastCard = (forecast: any) => {
+/**
+ * Render an individual forecast card.
+ * If forecast.date is missing or invalid, we compute a date using the card index.
+ * Temperature conversion from Celsius to Fahrenheit is applied.
+ * If forecast.icon is missing, we use a mapping based on description.
+ */
+const renderForecastCard = (forecast: any, index: number) => {
   if (!forecastContainer) return;
+  console.log("🔍 Debug: Forecast Data (Card):", forecast);
 
   const col = document.createElement("div");
   col.classList.add("col-auto");
@@ -162,63 +191,99 @@ const renderForecastCard = (forecast: any) => {
   const cardBody = document.createElement("div");
   cardBody.classList.add("card-body", "p-2");
 
-  const formattedDate = new Date(forecast.dt * 1000).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  // Date handling: if forecast.date exists and is a valid Unix timestamp (in seconds), use it;
+  // otherwise, compute a date as today plus (index+1) days.
+  let formattedDate = "N/A";
+  const dateNum = Number(forecast.date);
+  if (!isNaN(dateNum) && dateNum > 1000000000) {
+    const dateObj = new Date(dateNum * 1000);
+    formattedDate = dateObj.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  } else {
+    formattedDate = computeForecastDate(index);
+  }
 
   const cardTitle = document.createElement("h5");
   cardTitle.textContent = formattedDate;
 
-  const weatherIcon = document.createElement("img");
-  weatherIcon.src = `https://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`;
-  weatherIcon.alt = forecast.weather[0].description || "Weather icon";
+  // Convert forecast temperature (in Celsius) to Fahrenheit
+  const tempFahrenheit = celsiusToFahrenheit(forecast.temperature);
+
+  // Weather icon: use forecast.icon if available; otherwise, map description.
+  let iconCode = forecast.icon;
+  if (!iconCode && forecast.description) {
+    iconCode = mapDescriptionToIcon(forecast.description);
+  }
+  if (!iconCode) iconCode = "01d";
+
+  const forecastIcon = document.createElement("img");
+  forecastIcon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+  forecastIcon.alt = forecast.description || "Weather icon";
 
   const tempEl = document.createElement("p");
-  tempEl.textContent = `Temp: ${forecast.main.temp.toFixed(1)} °F`;
+  tempEl.textContent = `Temp: ${tempFahrenheit.toFixed(1)} °F`;
 
   const windEl = document.createElement("p");
-  windEl.textContent = `Wind: ${forecast.wind.speed} m/s`;
+  windEl.textContent = `Wind: ${forecast.windSpeed ?? "N/A"} m/s`;
 
   const humidityEl = document.createElement("p");
-  humidityEl.textContent = `Humidity: ${forecast.main.humidity}%`;
+  humidityEl.textContent = `Humidity: ${forecast.humidity ?? "N/A"}%`;
 
-  cardBody.append(cardTitle, weatherIcon, tempEl, windEl, humidityEl);
+  const weatherDescription = document.createElement("p");
+  weatherDescription.textContent = forecast.description ?? "No description available";
+
+  cardBody.append(cardTitle, forecastIcon, tempEl, windEl, humidityEl, weatherDescription);
   card.append(cardBody);
   col.append(card);
   forecastContainer.append(col);
 };
 
-// ✅ Render Search History
+// Render Search History
 const renderSearchHistory = (historyList: string[]) => {
   if (!searchHistoryContainer) return;
-  searchHistoryContainer.innerHTML = "";
+  searchHistoryContainer.innerHTML = '';
+
+  const list = document.createElement('ul');
+  list.classList.add('history-list');
 
   historyList.forEach((city: string) => {
-    const button = document.createElement("button");
+    const listItem = document.createElement('li');
+    const button = document.createElement('button');
     button.textContent = city;
-    button.classList.add("history-btn");
-    button.addEventListener("click", () => fetchWeather(city));
-    searchHistoryContainer.appendChild(button);
+    button.classList.add('history-btn');
+    button.addEventListener('click', () => fetchWeather(city));
+    listItem.appendChild(button);
+    list.appendChild(listItem);
   });
 
+  searchHistoryContainer.appendChild(list);
   console.log("✅ Search History Rendered:", historyList);
 };
 
-// ✅ Load Search History on Page Load
-const getAndRenderHistory = () => {
-  const historyList = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+// Fetch & Render Search History on Load (from localStorage)
+const getAndRenderHistory = async () => {
+  let historyList = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+  if (!Array.isArray(historyList)) {
+    historyList = [];
+  }
   renderSearchHistory(historyList);
 };
 
-// ✅ Event Listener for Search Form
+// Event Listener for Search Form
 if (searchForm && searchInput) {
-  searchForm.addEventListener("submit", (event) => {
+  searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (!searchInput.value.trim()) {
+      alert("City name cannot be empty.");
+      return;
+    }
     fetchWeather(searchInput.value.trim());
-    searchInput.value = "";
+    searchInput.value = '';
   });
 }
 
+// Load Search History on Page Load
 getAndRenderHistory();

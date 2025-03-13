@@ -20,12 +20,6 @@ router.post('/', async (req, res) => {
   } // ✅ Closing brace for the try-catch block is needed here
 }); // ✅ Closing brace for router.post() function
 
-  
-
-
-
-
-
 // GET search history
 router.get('/history', async (_req, res) => {
   try {

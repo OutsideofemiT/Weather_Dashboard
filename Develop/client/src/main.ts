@@ -1,6 +1,6 @@
 import './styles/jass.css';
 
-// Select necessary DOM elements with null checks
+// Select necessary DOM elements
 const searchForm = document.getElementById('search-form') as HTMLFormElement | null;
 const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
 const todayContainer = document.querySelector('#today') as HTMLDivElement | null;
@@ -18,9 +18,10 @@ interface WeatherData {
   date: string;
   icon: string;
   iconDescription: string;
-  tempF: number;
+  temperature: number;
   windSpeed: number;
   humidity: number;
+  description?: string;
 }
 
 // Fetch Weather Data
@@ -35,7 +36,7 @@ const fetchWeather = async (cityName: string) => {
     const response = await fetch('/api/weather/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cityName: cityName.trim(), units: 'imperial' }),
+      body: JSON.stringify({ cityName: cityName.trim(), units: 'metric' }), // 🔹 Fetch data in Celsius
     });
 
     if (!response.ok) {
@@ -51,7 +52,7 @@ const fetchWeather = async (cityName: string) => {
 
     renderCurrentWeather(weatherData.current);
     renderForecast(weatherData.forecast);
-    getAndRenderHistory(); // Refresh history after search
+    getAndRenderHistory(); // Update search history
   } catch (error) {
     console.error("Failed to fetch weather data:", error);
     alert("City not found. Please enter a valid city name.");
@@ -70,20 +71,16 @@ const fetchSearchHistory = async (): Promise<string[]> => {
   }
 };
 
-// Render Current Weather
-const renderCurrentWeather = (currentWeather: WeatherData | null) => {
+// ✅ Render Current Weather with Correct Data Mapping
+const renderCurrentWeather = (currentWeather: WeatherData) => {
   if (!heading || !weatherIcon || !tempEl || !windEl || !humidityEl || !todayContainer) {
     console.error("❌ Missing DOM elements. Check your HTML structure.");
     return;
   }
 
-  if (!currentWeather) {
-    console.error("❌ No weather data available.");
-    return;
-  }
-
   console.log("🔍 Debug: Current Weather Data:", currentWeather);
 
+  // ✅ Display formatted date
   const formattedDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -92,38 +89,46 @@ const renderCurrentWeather = (currentWeather: WeatherData | null) => {
 
   heading.textContent = `${currentWeather.city} (${formattedDate})`;
 
-  if (currentWeather.icon) {
-    weatherIcon.src = `https://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`;
-    weatherIcon.alt = currentWeather.iconDescription || 'Weather icon';
-  } else {
-    weatherIcon.src = '';
-  }
-
-  tempEl.textContent = `Temp: ${currentWeather.tempF ?? 'N/A'}°F`;
-  windEl.textContent = `Wind: ${currentWeather.windSpeed ?? 'N/A'} MPH`;
+  // ✅ Display temperature in Celsius
+  tempEl.textContent = `Temp: ${currentWeather.temperature.toFixed(1) ?? 'N/A'}°C`;
+  windEl.textContent = `Wind: ${currentWeather.windSpeed.toFixed(2) ?? 'N/A'} m/s`; // Adjust wind speed unit to m/s
   humidityEl.textContent = `Humidity: ${currentWeather.humidity ?? 'N/A'}%`;
 
-  todayContainer.innerHTML = '';
+  // ✅ Show weather description
+  const weatherDescription = document.createElement('p');
+  weatherDescription.textContent = currentWeather.description ?? "No description available";
+
+  // ✅ Ensure valid weather icon
+  weatherIcon.src = currentWeather.icon
+    ? `https://openweathermap.org/img/wn/${currentWeather.icon}@2x.png`
+    : 'https://openweathermap.org/img/wn/01d@2x.png';
+  weatherIcon.alt = currentWeather.description || 'Weather icon';
+
+  todayContainer.innerHTML = ''; // Clear previous content
   todayContainer.appendChild(heading);
   todayContainer.appendChild(weatherIcon);
   todayContainer.appendChild(tempEl);
   todayContainer.appendChild(windEl);
   todayContainer.appendChild(humidityEl);
+  todayContainer.appendChild(weatherDescription);
 };
 
-// Render 5-Day Forecast
+// ✅ Render 5-Day Forecast
 const renderForecast = (forecast: WeatherData[]) => {
   if (!forecastContainer) return;
   forecastContainer.innerHTML = '<h4 class="col-12">5-Day Forecast:</h4>';
+
+  // ✅ Select 5 daily forecasts
   const dailyForecasts = forecast.slice(0, 5);
   dailyForecasts.forEach(renderForecastCard);
 };
 
-// Render Individual Forecast Card
+// ✅ Render Individual Forecast Card
 const renderForecastCard = (forecast: WeatherData) => {
   if (!forecastContainer) return;
+
   console.log("🔍 Debug: Forecast Data:", forecast);
-  
+
   const col = document.createElement('div');
   col.classList.add('col-auto');
 
@@ -133,18 +138,33 @@ const renderForecastCard = (forecast: WeatherData) => {
   const cardBody = document.createElement('div');
   cardBody.classList.add('card-body', 'p-2');
 
+  // ✅ Format Date Properly
+  let formattedDate = "Invalid Date";
+  if (forecast.date) {
+    const dateObj = new Date(forecast.date);
+    if (!isNaN(dateObj.getTime())) {
+      formattedDate = dateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+  }
+
   const cardTitle = document.createElement('h5');
-  cardTitle.textContent = forecast.date || 'N/A';
+  cardTitle.textContent = formattedDate;
 
   const weatherIcon = document.createElement('img');
-  weatherIcon.src = forecast.icon ? `https://openweathermap.org/img/wn/${forecast.icon}@2x.png` : '';
-  weatherIcon.alt = forecast.iconDescription || 'Weather icon';
+  weatherIcon.src = forecast.icon
+    ? `https://openweathermap.org/img/wn/${forecast.icon}@2x.png`
+    : 'https://openweathermap.org/img/wn/01d@2x.png';
+  weatherIcon.alt = forecast.description || 'Weather icon';
 
   const tempEl = document.createElement('p');
-  tempEl.textContent = `Temp: ${forecast.tempF ?? 'N/A'} °F`;
+  tempEl.textContent = `Temp: ${forecast.temperature.toFixed(1) ?? 'N/A'} °C`;
 
   const windEl = document.createElement('p');
-  windEl.textContent = `Wind: ${forecast.windSpeed ?? 'N/A'} MPH`;
+  windEl.textContent = `Wind: ${forecast.windSpeed.toFixed(2) ?? 'N/A'} m/s`;
 
   const humidityEl = document.createElement('p');
   humidityEl.textContent = `Humidity: ${forecast.humidity ?? 'N/A'}%`;
@@ -155,7 +175,7 @@ const renderForecastCard = (forecast: WeatherData) => {
   forecastContainer.append(col);
 };
 
-// Render Search History
+// ✅ Render Search History
 const renderSearchHistory = (historyList: string[]) => {
   if (!searchHistoryContainer) return;
   searchHistoryContainer.innerHTML = '';
@@ -166,15 +186,16 @@ const renderSearchHistory = (historyList: string[]) => {
     button.addEventListener('click', () => fetchWeather(city));
     searchHistoryContainer.appendChild(button);
   });
+  console.log("✅ Search History Rendered:", historyList);
 };
 
-// Fetch and Render Search History
+// ✅ Fetch & Render Search History
 const getAndRenderHistory = async () => {
   const historyList = await fetchSearchHistory();
   renderSearchHistory(historyList);
 };
 
-// Event Listener for Search Form Submission
+// ✅ Event Listener for Search Form
 if (searchForm && searchInput) {
   searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -187,5 +208,5 @@ if (searchForm && searchInput) {
   });
 }
 
-// Load Search History on Page Load
+// ✅ Load Search History on Page Load
 getAndRenderHistory();

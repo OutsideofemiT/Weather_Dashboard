@@ -22,12 +22,12 @@ import weatherRoutes from './routes/api/weatherRoutes.js';
 // 2. Mount your API routes
 app.use('/api/weather', weatherRoutes);
 
-app.use(express.static(path.join(__dirname, './Develop/client/dist')));
+app.use(express.static(path.join(__dirname, '../../client/dist')));
 
 // 4. (Optional) Catch-all route for client-side routing
 //    If you’re using React Router or any client-side routing, you’ll want a fallback:
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, './Develop/client/dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '../../client/dist', 'index.html'));
 });
 
 // 5. Start the server on the correct port for Render

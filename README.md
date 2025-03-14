@@ -64,7 +64,7 @@ Render’s system will use these commands to build and start your service, ensur
 
 ## DEMO : 
 
-[Link Text](https://weather-dashboard-nhbc.onrender.com/)
+[Weather Dashboard](https://weather-dashboard-nhbc.onrender.com/)
 
 ![image](https://github.com/user-attachments/assets/371a11d8-95aa-47e2-ab3b-4eb7f0a9df03)
 

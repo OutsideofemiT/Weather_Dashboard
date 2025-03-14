@@ -75,14 +75,8 @@ Configure Environment Variables on Render (e.g., API_KEY).
 
 Render’s system will use these commands to build and start your service, ensuring that your server binds to the correct port.
 
-<<<<<<< HEAD
-## Demo
-(../Develop/client/assets/Weather.png)
-
-=======
 ## DEMO : https://weather-dashboard-nhbc.onrender.com/
 ![image](https://github.com/user-attachments/assets/371a11d8-95aa-47e2-ab3b-4eb7f0a9df03)
->>>>>>> 3e2968d39bf03f6f4e7ef777e0960b54db350c44
 
 ## License
 This project is open-source and available under the MIT License.
